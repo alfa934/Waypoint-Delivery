@@ -187,7 +187,7 @@ START:
     // if finished
     if( waypointIndex == WAYPOINT_LIST_SIZE )
     {
-        // stop();
+        RobotStop();
         while(1); // TURN OFF/RESET ROBOT
     }
     
