@@ -1,0 +1,11 @@
+1) Record X and Y data from HMC5883L
+   -> Rotate to 360 degrees (take as much data as you want)
+
+2) Place data in Excel (X and Y columns)
+   -> Circular graph (recommended)
+
+3) Filter out outlier data
+
+4) Find MIN and MAX data for X and Y
+
+5) offset = (MAX + MIN)/2
