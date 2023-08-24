@@ -9,3 +9,5 @@
 4) Find MIN and MAX data for X and Y
 
 5) offset = (MAX + MIN)/2
+   -> offset_X = (max_X + min_X)/2
+      etc...
