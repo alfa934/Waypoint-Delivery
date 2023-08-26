@@ -27,7 +27,6 @@ float currentLat, currentLong;
 float targetLat = waypointList[0][0];
 float targetLong = waypointList[0][1];
 int waypointIndex = 0;
-byte receivedGPSData = 0;
 
 #define HEADING_TOLERANCE 8             // +/- in degrees
 #define WAYPOINT_TOLERANCE 3            // +/- in metres
@@ -43,7 +42,6 @@ byte receivedGPSData = 0;
 float GetHeadingDegrees();
 void GetCurrentLocation();
 void CalculateHeading();
-void NextWaypoint();
 void MoveRobot();
 
 /////////////////////////////////////////////////////////////////////////////////
@@ -80,15 +78,42 @@ void setup() {
 }
 
 void loop() {
-    
-    while(Serial1.available() > 0)
-        if(gps.encode(Serial1.read()))
-        {
-            GetCurrentLocation();
-            if(receivedGPSData) break;
-        }
+START:
+    /* Get Latitude and Longitude */
+    GetCurrentLocation();
 
-    if( currentLat > 1 && currentLong > 1 ) // if Lat. and Long. is valid
+    /* Update DISTANCE to next waypoint*/
+    distToTarget = TinyGPSPlus::distanceBetween( currentLat, currentLong, 
+                                                 targetLat, targetLong );
+
+    /* If Waypoint has been REACHED */
+    if(distToTarget <= WAYPOINT_TOLERANCE)
+    {
+        RobotStop();
+        delay(STOP_WAYPOINT);
+
+        /* Change to next Waypoint*/
+        waypointIndex++;
+        targetLat  = waypointList[waypointIndex][0];
+        targetLong = waypointList[waypointIndex][1];
+
+        // if finished
+        if( waypointIndex == WAYPOINT_LIST_SIZE )
+        {
+            RobotStop();
+            while(1); // TURN OFF/RESET ROBOT
+        } 
+        else {
+            goto START;
+        }
+    }
+
+    /* Update COURSE to next waypoint*/
+    headingTarget = TinyGPSPlus::courseTo( currentLat, currentLong, 
+                                            targetLat, targetLong );
+
+    /* Check if GPS data is valid (Long. is usually +'ve in Indonesia */
+    if( currentLong > 1 && targetLong > 1 ) 
     {
         headingCurrent = GetHeadingDegrees();
         CalculateHeading();
@@ -135,28 +160,19 @@ float GetHeadingDegrees()
 
 void GetCurrentLocation()
 {
-    if(gps.location.isValid())
-    {
-        currentLat = gps.location.lat();
-        currentLong = gps.location.lng();
-
-        /* Update DISTANCE to next waypoint*/
-        distToTarget = TinyGPSPlus::distanceBetween( currentLat, currentLong, 
-                                                     targetLat, targetLong );
-        if(distToTarget <= WAYPOINT_TOLERANCE)
+    while(Serial1.available() > 0) 
+        if(gps.encode(Serial1.read()))
         {
-            RobotStop();
-            delay(STOP_WAYPOINT);
-            NextWaypoint();
+            /******** Update Long and Lat ********/
+            if(gps.location.isValid())
+            {
+                currentLat = gps.location.lat();
+                currentLong = gps.location.lng();
+                break; // received new data, so move on
+            } 
+            /*************************************/
         }
-
-        /* Update COURSE to next waypoint*/
-        headingTarget = TinyGPSPlus::courseTo( currentLat, currentLong, 
-                                               targetLat, targetLong );
-        receivedGPSData = 1;
-    } else {
-        receivedGPSData = 0;
-    }
+    
 }
 
 void CalculateHeading() {
@@ -175,41 +191,6 @@ void CalculateHeading() {
         outputError =  100;
     else if( headingError <= -60 )
         outputError = -100;
-}
-
-void NextWaypoint()
-{
-START:
-    waypointIndex++;
-    targetLat  = waypointList[waypointIndex][0];
-    targetLong = waypointList[waypointIndex][1];
-
-    // if finished
-    if( waypointIndex == WAYPOINT_LIST_SIZE )
-    {
-        RobotStop();
-        while(1); // TURN OFF/RESET ROBOT
-    }
-    
-    else {
-        GetCurrentLocation();
-        
-        /* Update DISTANCE to next waypoint*/
-        distToTarget = originalDistToTarget =
-        TinyGPSPlus::distanceBetween( currentLat, currentLong, 
-                                      targetLat, targetLong );
-                                      
-        if(distToTarget <= WAYPOINT_TOLERANCE)
-        {
-            RobotStop();
-            delay(STOP_WAYPOINT);
-            goto START;
-        }
-
-        /* Update COURSE to next waypoint*/
-        headingTarget = TinyGPSPlus::courseTo( currentLat, currentLong, 
-                                               targetLat, targetLong );
-    }
 }
 
 void MoveRobot()
