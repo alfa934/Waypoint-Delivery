@@ -5,7 +5,6 @@
 
 // Create GPS instance
 TinyGPSPlus gps;
-static const uint32_t GPSBaud = 9600;
 #define GPSSerial Serial1
 Adafruit_GPS SettingGPS(&GPSSerial);
 
@@ -76,7 +75,7 @@ void setup() {
     cmps.setOffset(-36.77, -1.635, 0); // (x, y, x) FIND OFFSET
     
     /************************* Start GPS communication *************************/
-    GPSSerial.begin(GPSBaud);
+    GPSSerial.begin(9600);
     // Turns on RMC and GGA (fixed data)
     SettingGPS.sendCommand(PMTK_SET_NMEA_OUTPUT_RMCGGA);
     // 1 Hz update rate
@@ -121,7 +120,7 @@ START:
 
     /* Update COURSE to next waypoint*/
     headingTarget = TinyGPSPlus::courseTo( currentLat, currentLong, 
-                                            targetLat, targetLong );
+                                           targetLat, targetLong );
 
     /* Check if GPS data is valid (Long. is usually +'ve in Indonesia */
     if( currentLong > 1 && targetLong > 1 ) 
