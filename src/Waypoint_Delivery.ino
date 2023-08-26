@@ -1,10 +1,12 @@
 #include <Wire.h>
 #include <TinyGPS++.h>
+#include <Adafruit_GPS.h>
 #include <HMC5883L.h>
 
 // Create GPS instance
 TinyGPSPlus gps;
 static const uint32_t GPSBaud = 9600;
+Adafruit_GPS SettingGPS(&Serial1);
 
 // Create Compass instance
 HMC5883L cmps;
@@ -74,8 +76,16 @@ void setup() {
     
     /************************* Start GPS communication *************************/
     Serial1.begin(GPSBaud);
-    
+    // Turns on RMC and GGA (fixed data)
+    SettingGPS.sendCommand(PMTK_SET_NMEA_OUTPUT_RMCGGA);
+    // 1 Hz update rate
+    SettingGPS.sendCommand(PMTK_SET_NMEA_UPDATE_1HZ);
+    // Turn off antenna status info
+    SettingGPS.sendCommand(PGCMD_NOANTENNA);
+
+    delay(1000);
 }
+
 
 void loop() {
 START:
@@ -116,6 +126,7 @@ START:
     if( currentLong > 1 && targetLong > 1 ) 
     {
         headingCurrent = GetHeadingDegrees();
+        
         CalculateHeading();
 
         MoveRobot();
