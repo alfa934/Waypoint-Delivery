@@ -6,7 +6,8 @@
 // Create GPS instance
 TinyGPSPlus gps;
 static const uint32_t GPSBaud = 9600;
-Adafruit_GPS SettingGPS(&Serial1);
+#define GPSSerial Serial1
+Adafruit_GPS SettingGPS(&GPSSerial);
 
 // Create Compass instance
 HMC5883L cmps;
@@ -75,7 +76,7 @@ void setup() {
     cmps.setOffset(-36.77, -1.635, 0); // (x, y, x) FIND OFFSET
     
     /************************* Start GPS communication *************************/
-    Serial1.begin(GPSBaud);
+    GPSSerial.begin(GPSBaud);
     // Turns on RMC and GGA (fixed data)
     SettingGPS.sendCommand(PMTK_SET_NMEA_OUTPUT_RMCGGA);
     // 1 Hz update rate
@@ -171,8 +172,8 @@ float GetHeadingDegrees()
 
 void GetCurrentLocation()
 {
-    while(Serial1.available() > 0) 
-        if(gps.encode(Serial1.read()))
+    while(GPSSerial.available() > 0) 
+        if(gps.encode(GPSSerial.read()))
         {
             /******** Update Long and Lat ********/
             if(gps.location.isValid())
