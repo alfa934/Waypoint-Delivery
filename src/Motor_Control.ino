@@ -1,56 +1,55 @@
-#define Pin_E_R   44
-#define Pin_E_L   46
-#define Pin_D1_R  40
-#define Pin_D2_R  42
-#define Pin_D1_L  48
-#define Pin_D2_L  50
+#define enA 13
+#define enB 8
+#define in1 12
+#define in2 11
+#define in3 10
+#define in4 9
 
 void MotorSetup()
 {
-  pinMode(Pin_D1_L, OUTPUT);
-  pinMode(Pin_D2_L, OUTPUT);
-  pinMode(Pin_E_L, OUTPUT);
-  pinMode(Pin_D1_R, OUTPUT);
-  pinMode(Pin_D2_R, OUTPUT);
-  pinMode(Pin_E_R, OUTPUT);
+  pinMode(enA, OUTPUT);
+  pinMode(enB, OUTPUT);
+  pinMode(in1, OUTPUT);
+  pinMode(in2, OUTPUT);
+  pinMode(in3, OUTPUT);
+  pinMode(in4, OUTPUT);
 }
 
 void RobotStop()
 {
-  analogWrite(Pin_E_L, 0);
-  digitalWrite(Pin_D1_L, LOW);
-  digitalWrite(Pin_D2_L, LOW);
-  analogWrite(Pin_E_R, 0);
-  digitalWrite(Pin_D1_R, LOW);
-  digitalWrite(Pin_D2_R, LOW);
+  analogWrite(enA, 0);
+  digitalWrite(in1, LOW);
+  digitalWrite(in2, LOW);
+  analogWrite(enB, 0);
+  digitalWrite(in3, LOW);
+  digitalWrite(in4, LOW);
 }
 
-
-void RobotMove(int kiri, int kanan)
+void RobotMove(int leftRotation, int rightRotation)
 {
-  if (kiri < 0)
+  if (leftRotation < 0)
   {
-    digitalWrite(Pin_D1_L, HIGH);
-    digitalWrite(Pin_D2_L, LOW);
-    kiri = -1 * kiri;
+    digitalWrite(in1, LOW);
+    digitalWrite(in2, HIGH);
+    leftRotation = -1 * leftRotation;
   }
-  else
+  else // forward
   {
-    digitalWrite(Pin_D1_L, LOW);
-    digitalWrite(Pin_D2_L, HIGH);
+    digitalWrite(in1, HIGH);
+    digitalWrite(in2, LOW);
   }
-  analogWrite(Pin_E_L, kiri);
+  analogWrite(enA, leftRotation);
 
-  if (kanan < 0)
+  if (rightRotation < 0)
   {
-    digitalWrite(Pin_D1_R, HIGH);
-    digitalWrite(Pin_D2_R, LOW);
-    kanan = -1 * kanan;
+    digitalWrite(in3, HIGH);
+    digitalWrite(in4, LOW);
+    rightRotation = -1 * rightRotation;
   }
-  else
+  else // forward
   {
-    digitalWrite(Pin_D1_R, LOW);
-    digitalWrite(Pin_D2_R, HIGH);
+    digitalWrite(in3, LOW);
+    digitalWrite(in4, HIGH);
   }
-  analogWrite(Pin_E_R, kanan);
+  analogWrite(enB, rightRotation);
 }
