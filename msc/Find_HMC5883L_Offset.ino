@@ -48,7 +48,7 @@ void loop(void)
  
   /* Display the results (magnetic vector values are in micro-Tesla (uT)) */
   Serial.print("X, Y:  [ "); 
-  Serial.print(event.magnetic.x); Serial.print(", ");
+  Serial.print(event.magnetic.x); Serial.print(" , ");
   Serial.print(event.magnetic.y); Serial.print(" ]");
 //  Serial.print(event.magnetic.z); Serial.print(", ");
   Serial.println(" uT");
