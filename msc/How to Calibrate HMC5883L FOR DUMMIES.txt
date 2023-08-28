@@ -1,4 +1,4 @@
-1) Record X and Y data from HMC5883L
+1) Record X and Y data from HMC5883L (use Find_HMC5883L_Offset.ino)
    -> Rotate to 360 degrees (take as much data as you want)
 
 2) Place data in Excel (X and Y columns)
