@@ -30,9 +30,9 @@ float targetLat = waypointList[0][0];
 float targetLong = waypointList[0][1];
 int waypointIndex = 0;
 
-#define HEADING_TOLERANCE 8             // +/- in degrees
-#define WAYPOINT_TOLERANCE 3            // +/- in metres
-#define STOP_WAYPOINT (3 * 1000)        // in milliseconds
+#define HEADING_TOLERANCE  8             // +/- in degrees
+#define WAYPOINT_TOLERANCE 3             // +/- in metres
+#define STOP_WAYPOINT     (3 * 1000)     // in milliseconds
 
 /*
  * Serial1 -> pins 19 (RX) and 18 (TX), 
@@ -42,9 +42,9 @@ int waypointIndex = 0;
 
 /* FUNCTIONS */
 float GetHeadingDegrees();
-void GetCurrentLocation();
-void CalculateHeading();
-void MoveRobot();
+void  GetCurrentLocation();
+void  CalculateHeading();
+void  MoveRobot();
 
 /////////////////////////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////////////////////////
