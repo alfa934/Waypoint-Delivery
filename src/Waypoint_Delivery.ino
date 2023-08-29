@@ -5,7 +5,7 @@
 
 // Create GPS instance
 TinyGPSPlus gps;
-#define GPSSerial Serial1
+#define GPSSerial Serial3           // ONLY WORKS WITH SERIAL3
 Adafruit_GPS SettingGPS(&GPSSerial);
 
 // Create Compass instance
@@ -30,9 +30,9 @@ float targetLat = waypointList[0][0];
 float targetLong = waypointList[0][1];
 int waypointIndex = 0;
 
-#define HEADING_TOLERANCE  8             // +/- in degrees
-#define WAYPOINT_TOLERANCE 3             // +/- in metres
-#define STOP_WAYPOINT     (3 * 1000)     // in milliseconds
+#define HEADING_TOLERANCE 8             // +/- in degrees
+#define WAYPOINT_TOLERANCE 3            // +/- in metres
+#define STOP_WAYPOINT (3 * 1000)        // in milliseconds
 
 /*
  * Serial1 -> pins 19 (RX) and 18 (TX), 
@@ -42,9 +42,9 @@ int waypointIndex = 0;
 
 /* FUNCTIONS */
 float GetHeadingDegrees();
-void  GetCurrentLocation();
-void  CalculateHeading();
-void  MoveRobot();
+void GetCurrentLocation();
+void CalculateHeading();
+void MoveRobot();
 
 /////////////////////////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////////////////////////
@@ -72,7 +72,8 @@ void setup() {
     // Set number of samples averaged
     cmps.setSamples(HMC5883L_SAMPLES_8);
     // Set calibration offset. See How to Calibrate HMC5883L FOR DUMMIES.txt
-    cmps.setOffset(-36.77, -1.635, 0); // (x, y, x) FIND OFFSET
+//    cmps.setOffset(-36.77, -1.635, 0); // (x, y, x) FIND OFFSET
+    cmps.setOffset(12.635, -14.32, 0); // (x, y, x) FIND OFFSET
     
     /************************* Start GPS communication *************************/
     GPSSerial.begin(9600);
@@ -173,6 +174,7 @@ float GetHeadingDegrees()
 
 void GetCurrentLocation()
 {
+    
     if(gps.encode(GPSSerial.read()))
     {
         /******** Update Long and Lat ********/
@@ -183,6 +185,7 @@ void GetCurrentLocation()
         } 
         /*************************************/
     }
+    
 }
 
 void CalculateHeading() {
