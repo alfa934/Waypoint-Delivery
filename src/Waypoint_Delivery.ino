@@ -31,7 +31,7 @@ float targetLong = waypointList[0][1];
 int waypointIndex = 0;
 
 #define HEADING_TOLERANCE 8             // +/- in degrees
-#define WAYPOINT_TOLERANCE 3            // +/- in metres
+#define WAYPOINT_TOLERANCE 1            // +/- in metres
 #define STOP_WAYPOINT (3 * 1000)        // in milliseconds
 
 /*
@@ -46,17 +46,25 @@ void GetCurrentLocation();
 void CalculateHeading();
 void MoveRobot();
 
+void blinking()
+{
+    digitalWrite(LED_BUILTIN, HIGH);
+    delay(500);
+    digitalWrite(LED_BUILTIN, LOW);
+    delay(500);
+}
+
 /////////////////////////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////////////////////////
 
 void setup() {
     
-    Serial.begin(9600); // Display Information
+    Serial.begin(115200); // Display Information
 
     /**************************** Start Motor Setup ****************************/
     MotorSetup();
-    
+    pinMode(LED_BUILTIN, OUTPUT);
     /************************ Start Compass Connection *************************/
     while(!cmps.begin()) {
         Serial.println(F("Searching for HMC5883L sensor! Check wiring"));
@@ -72,8 +80,8 @@ void setup() {
     // Set number of samples averaged
     cmps.setSamples(HMC5883L_SAMPLES_8);
     // Set calibration offset. See How to Calibrate HMC5883L FOR DUMMIES.txt
-//    cmps.setOffset(-36.77, -1.635, 0); // (x, y, x) FIND OFFSET
-    cmps.setOffset(12.635, -14.32, 0); // (x, y, x) FIND OFFSET
+    cmps.setOffset(-36.77, -1.635, 0); // (x, y, x) FIND OFFSET
+//    cmps.setOffset(12.635, -14.32, 0); // (x, y, x) FIND OFFSET
     
     /************************* Start GPS communication *************************/
     GPSSerial.begin(9600);
@@ -85,57 +93,74 @@ void setup() {
     SettingGPS.sendCommand(PGCMD_NOANTENNA);
 
     delay(1000);
+    Serial.println(F("All Modules Ready!"));
 }
 
 
 void loop() {
 START:
-    while(GPSSerial.available() > 0) 
-    {
+while(GPSSerial.available() > 0) 
+{
+    if(gps.encode(GPSSerial.read())) {
+        Serial.println(F("Ready, Set, GO!"));
         /* Get Latitude and Longitude */
         GetCurrentLocation();
-    
-        /* Update DISTANCE to next waypoint*/
-        distToTarget = TinyGPSPlus::distanceBetween( currentLat, currentLong, 
-                                                     targetLat, targetLong );
-    
-        /* If Waypoint has been REACHED */
-        if(distToTarget <= WAYPOINT_TOLERANCE)
+        Serial.print(F("CurrLat, CurrLong : "));
+        Serial.print(currentLat, 12);
+        Serial.print(" , ");
+        Serial.println(currentLong, 12);
+        
+        if(!(currentLat == 0 && currentLong == 0)) 
         {
-            RobotStop();
-            delay(STOP_WAYPOINT);
-    
-            /* Change to next Waypoint*/
-            waypointIndex++;
-            targetLat  = waypointList[waypointIndex][0];
-            targetLong = waypointList[waypointIndex][1];
-    
-            // if finished
-            if( waypointIndex == WAYPOINT_LIST_SIZE )
+            /* Update DISTANCE to next waypoint*/
+            distToTarget = TinyGPSPlus::distanceBetween( currentLat, currentLong, 
+                                                         targetLat, targetLong );
+            Serial.print(F("distToTarget : "));
+            Serial.println(distToTarget);
+            /* If Waypoint has been REACHED */
+            if(distToTarget <= WAYPOINT_TOLERANCE)
             {
+                Serial.println(F("Waypoint Reached!"));
                 RobotStop();
-                while(1); // TURN OFF/RESET ROBOT
-            } 
-            else {
-                goto START;
+                delay(STOP_WAYPOINT);
+        
+                /* Change to next Waypoint*/
+                waypointIndex++;
+                targetLat  = waypointList[waypointIndex][0];
+                targetLong = waypointList[waypointIndex][1];
+        
+                // if finished
+                if( waypointIndex == WAYPOINT_LIST_SIZE )
+                {
+                    Serial.println(F("Finished ALL WAYPOINT"));
+                    RobotStop();
+                    while(1) blinking(); // TURN OFF/RESET ROBOT
+                } 
+                else {
+                    goto START;
+                }
+            }
+            
+            /* Update COURSE to next waypoint*/
+            headingTarget = TinyGPSPlus::courseTo( currentLat, currentLong, 
+                                                   targetLat, targetLong );
+            Serial.print(F("Heading Target : "));
+            Serial.println(headingTarget);
+            /* Check if GPS data is valid (Long. is usually +'ve in Indonesia */
+            if( currentLong > 1 && targetLong > 1 ) 
+            {
+                headingCurrent = GetHeadingDegrees();
+                Serial.print(F("Heading Current : "));
+                Serial.println(headingCurrent);
+                CalculateHeading();
+                Serial.println(F("Calculating DONE!"));
+        
+                MoveRobot();
+                Serial.println(F("Moving Robot"));
             }
         }
-    
-        /* Update COURSE to next waypoint*/
-        headingTarget = TinyGPSPlus::courseTo( currentLat, currentLong, 
-                                               targetLat, targetLong );
-    
-        /* Check if GPS data is valid (Long. is usually +'ve in Indonesia */
-        if( currentLong > 1 && targetLong > 1 ) 
-        {
-            headingCurrent = GetHeadingDegrees();
-            
-            CalculateHeading();
-    
-            MoveRobot();
-        }
-        
     }
+}
     
     if (millis() > 5000 && gps.charsProcessed() < 10)
     {
@@ -174,23 +199,14 @@ float GetHeadingDegrees()
 
 void GetCurrentLocation()
 {
-    
-    if(gps.encode(GPSSerial.read()))
-    {
-        /******** Update Long and Lat ********/
-        if(gps.location.isValid())
-        {
-            currentLat = gps.location.lat();
-            currentLong = gps.location.lng();
-        } 
-        /*************************************/
-    }
-    
+    currentLat = gps.location.lat();
+    currentLong = gps.location.lng();
 }
 
 void CalculateHeading() {
     headingError = headingTarget - headingCurrent;
-
+    Serial.print(F("Heading Error : "));
+    Serial.println(headingError);
     // adjust for compass wrap
     if(headingError < -180) headingError += 360;
     if(headingError >  180) headingError -= 360;
@@ -208,19 +224,22 @@ void CalculateHeading() {
 
 void MoveRobot()
 {
+    Serial.print(F("outputError : "));
+    Serial.println(outputError);
     if(outputError == 0)
     {
-        RobotMove(60, 60);             
+        RobotMove(120, 120);             
     }
     else if(outputError < 60)
     {
         if(outputError < 0)             
-            RobotMove(60 + outputError, 60);
+            RobotMove(120 + outputError, 120);
         else                            
-            RobotMove(60, 60 - outputError);
+            RobotMove(120, 120 - outputError);
     } 
     else if (outputError ==  100 || outputError == -100)
     {
-         RobotMove(50, -50);      
+         RobotMove(100, -100);      
     }
+    
 }
